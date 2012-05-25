@@ -1,7 +1,7 @@
 " Filename:      lastmod.vim
 " Description:   Updates a last modified timestamp when writing a file
 " Maintainer:    Jeremy Cantrell <jmcantrell@gmail.com>
-" Last Modified: Fri 2011-05-20 00:44:11 (-0400)
+" Last Modified: Thu 2012-05-24 22:25:57 (-0400)
 
 if exists('g:lastmod_loaded') || &cp
     finish
@@ -26,12 +26,13 @@ function! s:SetVar(name, value)
     endif
 endfunction
 
-function! s:GetVar(name)
-    if exists('b:lastmod_{a:name}')
-        return b:lastmod_{a:name}
-    else
-        return g:lastmod_{a:name}
-    endif
+function! s:GetAny(name)
+    for pre in ['b', 'g']
+        let var = pre.':lastmod_'.a:name
+        if exists(var)
+            return {var}
+        endif
+    endfor
 endfunction
 
 call s:SetVar('format', '%a %Y-%m-%d %H:%M:%S (%z)')
@@ -40,11 +41,11 @@ call s:SetVar('suffix', '')
 call s:SetVar('lines', 20)
 
 function! s:Update()
-    if &modified
+    if s:GetAny('loaded') && &modified
         let save_cursor = getpos('.')
-        let n = min([s:GetVar('lines'), line('$')])
-        let timestamp = strftime(s:GetVar('format'))
-        let pat = s:GetVar('prefix').'\zs.*\ze'.s:GetVar('suffix')
+        let n = min([s:GetAny('lines'), line('$')])
+        let timestamp = strftime(s:GetAny('format'))
+        let pat = s:GetAny('prefix').'\zs.*\ze'.s:GetAny('suffix')
         let pat = substitute(pat, '%', '\%', 'g')
         let timestamp = substitute(timestamp, '%', '\%', 'g')
         keepjumps silent exe '1,'.n.'s%^.*'.pat.'.*$%'.timestamp.'%e'
